@@ -1,4 +1,4 @@
-export interface IAPIResponse {
+export interface IMultiplayerAPIResponse {
     success: boolean;
     error: string[];
     object?: any;

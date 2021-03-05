@@ -5,13 +5,12 @@ import ReconnectingWebSocket from 'reconnecting-websocket';
 export const MultiplayerStateContext = React.createContext({});
 
 export type IMultiplayerUserPresenceState = {
-    cursor: Types.ICursor;
     user: Types.IMultiplayerUser;
 }
 export type IMultiplayerDocumentPresenceState = { [user_id: string]: IMultiplayerUserPresenceState };
 export type IMultiplayerPresenceState = { [document_id: string]: IMultiplayerDocumentPresenceState };
-export type IMultiplayerDocumentState = { [document_id: string]: Types.IDocument };
-export type IMultiplayerNodeState = { [node_id: string]: Types.INode };
+export type IMultiplayerDocumentState = { [document_id: string]: Types.IMultiplayerDocument };
+export type IMultiplayerNodeState = { [node_id: string]: Types.IMultiplayerNode };
 
 const initialState = {
     connected: false,
@@ -25,12 +24,15 @@ export type IMultiplayerState = typeof initialState;
 export enum MultiplayerActionType {
     SetConnectionStatus = 'setConnectionStatus',
     SetDocument = 'setDocument',
+    UpdateDocument = 'updateDcoument',
+    SetDocumentAttrs = 'setDocumentAttrs',
     SetNode = 'setNode',
+    DeleteNode = 'deleteNode',
     SetNodeProperties = 'setNodeProperties',
+    SetUserPresenceProperties = 'setUserPresenceProperties',
     SetDocumentPresence = 'setDocumentPresence',
     SetUserPresence = 'setUserPresence',
     RemoveUserPresence = 'removeUserPresence',
-    SetCursor = 'setCursor',
     CreateNode = 'createNode',
     UpdateNode = 'updateNode',
 }
@@ -40,31 +42,48 @@ export interface IMultiplayerSetConnectionStatusAction {
     payload: boolean;
 }
 
+export interface IMultiplayerUpdateDocumentAction {
+    type: MultiplayerActionType.UpdateDocument;
+    document: Types.IMultiplayerDocument;
+}
+
 export interface IMultiplayerSetDocumentAction {
     type: MultiplayerActionType.SetDocument;
-    document: Types.IDocument;
-    nodes: { [key: string]: Types.INode };
+    document: Types.IMultiplayerDocument;
+    nodes: { [key: string]: Types.IMultiplayerNode };
 }
 
 export interface IMultiplayerSetNodeAction {
     type: MultiplayerActionType.SetNode;
-    node: Types.INode;
+    node: Types.IMultiplayerNode;
 }
 
 export interface IMultiplayerCreateNodeAction {
     type: MultiplayerActionType.CreateNode;
-    node: Types.INode;
+    node: Types.IMultiplayerNode;
 }
 
 export interface IMultiplayerUpdateNodeAction {
     type: MultiplayerActionType.UpdateNode;
-    node: Types.INode;
+    node: Types.IMultiplayerNode;
+}
+
+export interface IMultiplayerDeleteNodeAction {
+    type: MultiplayerActionType.DeleteNode;
+    node_id: string;
 }
 
 export interface IMultiplayerSetNodePropertiesAction {
     type: MultiplayerActionType.SetNodeProperties;
     node_id: string;
-    properties: Types.INodeProperties;
+    properties: Types.IMultiplayerNodeProperties;
+}
+
+export interface IMultiplayerSetUserPresencePropertiesAction {
+    type: MultiplayerActionType.SetUserPresenceProperties;
+    user_id: string;
+    document_id: string;
+    properties: Types.IMultiplayerUserProperties;
 }
 
 export interface IMultiplayerSetDocumentPresenceAction {
@@ -80,13 +99,6 @@ export interface IMultiplayerSetUserPresenceAction {
     presence: IMultiplayerUserPresenceState;
 }
 
-export interface IMultiplayerSetUserCursorAction {
-    type: MultiplayerActionType.SetCursor;
-    document_id: string;
-    user_id: string;
-    cursor: Types.ICursor;
-}
-
 export interface IMultiplayerRemoveUserPresenceAction {
     type: MultiplayerActionType.RemoveUserPresence;
     document_id: string;
@@ -96,13 +108,15 @@ export interface IMultiplayerRemoveUserPresenceAction {
 type Actions = IMultiplayerSetConnectionStatusAction |
     IMultiplayerCreateNodeAction |
     IMultiplayerUpdateNodeAction |
+    IMultiplayerDeleteNodeAction |
     IMultiplayerSetDocumentAction |
+    IMultiplayerUpdateDocumentAction |
     IMultiplayerSetNodeAction |
     IMultiplayerSetNodePropertiesAction |
     IMultiplayerSetDocumentPresenceAction |
     IMultiplayerSetUserPresenceAction |
     IMultiplayerRemoveUserPresenceAction |
-    IMultiplayerSetUserCursorAction;
+    IMultiplayerSetUserPresencePropertiesAction;
 
 const reducer: React.Reducer<IMultiplayerState, Actions> = (state, action) => {
     switch (action.type) {
@@ -115,14 +129,51 @@ const reducer: React.Reducer<IMultiplayerState, Actions> = (state, action) => {
             let documents = { ...state.documents };
             let nodes = { ...state.nodes };
             documents[action.document.id] = action.document;
-            const keys = Object.keys(action.nodes);
+            const keys = Object.keys(action.nodes || {});
             keys.forEach((key) => nodes[key] = action.nodes[key]);
             return { ...state, documents, nodes };
         }
 
+        case MultiplayerActionType.UpdateDocument: {
+            let documents = { ...state.documents };
+
+            documents[action.document.id].name = action.document.name;
+            documents[action.document.id].updated_at = action.document.updated_at;
+
+            return { ...state, documents };
+        }
+
+        case MultiplayerActionType.CreateNode:
         case MultiplayerActionType.SetNode: {
             let nodes = { ...state.nodes };
             nodes[action.node.id] = action.node;
+            return { ...state, nodes };
+        }
+
+        case MultiplayerActionType.UpdateNode: {
+            let nodes = { ...state.nodes };
+
+            nodes[action.node.id].name = action.node.name;
+            nodes[action.node.id].type = action.node.type;
+            nodes[action.node.id].parent_id = action.node.parent_id;
+            nodes[action.node.id].children = action.node.children;
+
+            return { ...state };
+        }
+
+        case MultiplayerActionType.DeleteNode: {
+            let nodes = { ...state.nodes };
+            let node = nodes[action.node_id];
+
+            if (node && node.parent_id) {
+                const parentNode = nodes[node.parent_id];
+                if (parentNode) {
+                    parentNode.children = parentNode.children.filter((id) => id !== node.parent_id);
+                }
+            }
+
+            delete nodes[action.node_id];
+
             return { ...state, nodes };
         }
 
@@ -130,7 +181,7 @@ const reducer: React.Reducer<IMultiplayerState, Actions> = (state, action) => {
             let nodes = { ...state.nodes };
 
             let existingNode = nodes[action.node_id];
-            existingNode.properties = mergeNodeProperties(existingNode.properties, action.properties);
+            existingNode.properties = mergeProperties(existingNode.properties, action.properties);
             nodes[action.node_id] = existingNode;
 
             return { ...state, nodes };
@@ -145,11 +196,25 @@ const reducer: React.Reducer<IMultiplayerState, Actions> = (state, action) => {
         case MultiplayerActionType.SetUserPresence: {
             let presence = { ...state.presence };
             let docPresence = presence[action.document_id];
-            console.log(action.document_id, docPresence, presence);
-            // console.log("userPresence", docPresence)
-            // docPresence[action.user_id] = action.presence;
-            // presence[action.document_id] = docPresence;
-            // console.log("userPresence", docPresence)
+            if (!docPresence) docPresence = {};
+            docPresence[action.user_id] = action.presence;
+            presence[action.document_id] = docPresence;
+            return { ...state, presence };
+        }
+
+        case MultiplayerActionType.SetUserPresenceProperties: {
+            let presence = { ...state.presence };
+            let docPresence = presence[action.document_id] || {};
+
+            let existingUserPresence = docPresence[action.user_id] || {
+                user: { id: "", first_name: "", last_name: "", name: "", email: "", properties: {} },
+            };
+
+            const existingProps = existingUserPresence.user.properties;
+            existingUserPresence.user.properties = mergeProperties(existingProps, action.properties);
+            docPresence[action.user_id] = existingUserPresence;
+            presence[action.document_id] = docPresence;
+
             return { ...state, presence };
         }
 
@@ -160,16 +225,6 @@ const reducer: React.Reducer<IMultiplayerState, Actions> = (state, action) => {
             return { ...state, presence };
         }
 
-        case MultiplayerActionType.SetCursor: {
-            let presence = { ...state.presence };
-            let docPresence = presence[action.document_id] || {};
-            if (action.user_id in docPresence) {
-                docPresence[action.user_id].cursor = action.cursor;
-                presence[action.document_id] = docPresence;
-            }
-            return { ...state, presence };
-        }
-
 
 
         default:
@@ -177,7 +232,7 @@ const reducer: React.Reducer<IMultiplayerState, Actions> = (state, action) => {
     }
 };
 
-const mergeNodeProperties = (existingProperties: Types.INodeProperties, newProperties: Types.INodeProperties) => {
+const mergeProperties = (existingProperties: Types.IMultiplayerNodeProperties & Types.IMultiplayerUserProperties, newProperties: Types.IMultiplayerNodeProperties & Types.IMultiplayerUserProperties) => {
     const keys = Object.keys(newProperties);
 
     var i = 0;
@@ -187,7 +242,7 @@ const mergeNodeProperties = (existingProperties: Types.INodeProperties, newPrope
         const existingProp = existingProperties[key];
 
         if (typeof newProp === 'object' && typeof existingProp === 'object') {
-            existingProperties[key] = mergeNodeProperties(existingProp, newProp);
+            existingProperties[key] = mergeProperties(existingProp, newProp);
         } else {
             existingProperties[key] = newProp;
         }
@@ -228,17 +283,6 @@ export const MultiplayerProvider = ({ children }: any) => {
     );
 };
 
-const createNode = (action: IMultiplayerCreateNodeAction, rws: ReconnectingWebSocket) => {
-    rws.send(JSON.stringify(action));
-}
-
-const updateNode = (action: IMultiplayerUpdateNodeAction, rws: ReconnectingWebSocket) => {
-    rws.send(JSON.stringify(action));
-}
-
-const setCursor = (action: IMultiplayerSetUserCursorAction, rws: ReconnectingWebSocket) => {
-    rws.send(JSON.stringify(action));
-}
 
 export const useZeusMultiplayer: any = () => useContext(MultiplayerStateContext);
 
@@ -246,7 +290,7 @@ export const useZeusMultiplayer: any = () => useContext(MultiplayerStateContext)
 // useContext hook - export here to keep code for global Multiplayer state
 // together in this file, allowing user info to be accessed and updated
 // in any functional component using the hook
-export const useZeusMultiplayerClient: any = (dispatch, accessToken: string, documentId: string, isLocal = true, localBaseUrl = 'ws://localhost:8080', prodBaseUrl = 'wss://multiplayer.zeusdev.io') => {
+export const useZeusMultiplayerClient: any = (dispatch, accessToken: string, documentId: string, onDocumentLoaded: any, isLocal = true, localBaseUrl = 'ws://localhost:8080', prodBaseUrl = 'wss://multiplayer.zeusdev.io') => {
 
     const url = (isLocal ? localBaseUrl : prodBaseUrl) + `/ws/${documentId}/${accessToken}`;
     const rws = new ReconnectingWebSocket(url);
@@ -269,19 +313,79 @@ export const useZeusMultiplayerClient: any = (dispatch, accessToken: string, doc
 
     rws.addEventListener('message', (msg) => {
         const msgJson = JSON.parse(msg.data);
-        console.log(`[${msgJson.type}//${msgJson.document_id}]`, msgJson);
         dispatch(msgJson);
+        if (msgJson.type === MultiplayerActionType.SetDocument) {
+            onDocumentLoaded();
+        }
     });
 
     rws.addEventListener('error', (error) => {
         console.log('error', error);
     });
 
+    const updateDocument = (document: Types.IMultiplayerDocumentUpdate) => {
+        const action = {
+            type: MultiplayerActionType.UpdateDocument,
+            document: document,
+        }
+
+        rws.send(JSON.stringify(action));
+    }
+
+    const createNode = (node: Types.IMultiplayerNodeCreate) => {
+        const action = {
+            type: MultiplayerActionType.CreateNode,
+            node: node,
+        }
+
+        rws.send(JSON.stringify(action));
+    }
+
+    const updateNode = (node: Types.IMultiplayerNode) => {
+        const action = {
+            type: MultiplayerActionType.UpdateNode,
+            node: node,
+        }
+
+        rws.send(JSON.stringify(action));
+    }
+
+    const deleteNode = (node_id: string) => {
+        const action = {
+            type: MultiplayerActionType.DeleteNode,
+            node_id: node_id,
+        }
+
+        rws.send(JSON.stringify(action));
+    }
+
+    const setNodeProperties = (node_id: string, properties: { [key: string]: any }) => {
+        const action = {
+            type: MultiplayerActionType.SetNodeProperties,
+            node_id,
+            properties,
+        };
+        dispatch(action);
+        rws.send(JSON.stringify(action));
+    }
+
+    const setUserPresenceProperties = (properties: any) => {
+        const action = {
+            type: MultiplayerActionType.SetUserPresenceProperties,
+            properties,
+        }
+        dispatch(action);
+        rws.send(JSON.stringify(action));
+    }
+
     const zeus = {
         rws: rws,
-        createNode: (action: IMultiplayerCreateNodeAction) => createNode(action, rws),
-        updateNode: (action: IMultiplayerUpdateNodeAction) => updateNode(action, rws),
-        setCursor: (action: IMultiplayerSetUserCursorAction) => setCursor(action, rws),
+        createNode: createNode,
+        updateNode: updateNode,
+        deleteNode: deleteNode,
+        updateDocument: updateDocument,
+        setUserPresenceProperties: setUserPresenceProperties,
+        setNodeProperties: setNodeProperties,
     }
 
     return zeus;

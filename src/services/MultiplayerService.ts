@@ -2,8 +2,8 @@ import CamelCase from 'camelcase-keys';
 
 import * as ZeusMultiplayerTypes from "../types";
 
-const handleAPIResponseObject = (result: any, resolve: any): Promise<ZeusMultiplayerTypes.IAPIResponse> => {
-    return resolve(CamelCase(result, { deep: true }) as ZeusMultiplayerTypes.IAPIResponse);
+const handleAPIResponseObject = (result: any, resolve: any): Promise<ZeusMultiplayerTypes.IMultiplayerAPIResponse> => {
+    return resolve(CamelCase(result, { deep: true }) as ZeusMultiplayerTypes.IMultiplayerAPIResponse);
 }
 
 const decamelize = (params: any, separator?: string | undefined) => {

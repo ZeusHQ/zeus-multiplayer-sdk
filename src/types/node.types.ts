@@ -1,23 +1,25 @@
-export type INodeProperties = { [key: string]: any };
+export type IMultiplayerNodeProperties = { [key: string]: any };
 
-export interface INode {
+export interface IMultiplayerNode {
     id: string;
-    documentId: string;
+    document_id: string;
+    parent_id: string;
     name: string;
     type: string;
-    properties: INodeProperties;
+    properties: IMultiplayerNodeProperties;
+    children: string[],
     createdAt: string;
     updatedAt: string;
 }
 
-export interface INodeCreate {
+export interface IMultiplayerNodeCreate {
     name: string;
     type: string;
-    properties: INodeProperties;
+    properties: IMultiplayerNodeProperties;
 }
 
-export interface INodeUpdate {
+export interface IMultiplayerNodeUpdate {
     name: string;
     type: string;
-    properties: INodeProperties;
+    properties: IMultiplayerNodeProperties;
 }

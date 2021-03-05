@@ -1,14 +1,15 @@
-export interface IDocument {
+export interface IMultiplayerDocument {
     id: string;
     name: string;
-    createdAt: string;
-    updatedAt: string;
+    root_id: string;
+    created_at: string;
+    updated_at: string;
 }
 
-export interface IDocumentCreate {
+export interface IMultiplayerDocumentCreate {
     name: string;
 }
 
-export interface IDocumentUpdate {
+export interface IMultiplayerDocumentUpdate {
     name: string;
 }
