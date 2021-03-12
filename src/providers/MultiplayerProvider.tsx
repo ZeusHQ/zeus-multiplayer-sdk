@@ -290,10 +290,18 @@ export const useZeusMultiplayer: any = () => useContext(MultiplayerStateContext)
 // useContext hook - export here to keep code for global Multiplayer state
 // together in this file, allowing user info to be accessed and updated
 // in any functional component using the hook
-export const useZeusMultiplayerClient: any = (dispatch, accessToken: string, documentId: string, onDocumentLoaded: any, isLocal = true, localBaseUrl = 'ws://localhost:8080', prodBaseUrl = 'wss://multiplayer.zeusdev.io') => {
+export const useZeusMultiplayerClient: any = (dispatch, accessToken: string, documentId: string, onDocumentLoaded: any, isLocal = undefined, localBaseUrl = 'ws://localhost:8080', prodBaseUrl = 'wss://multiplayer-server.zeusdev.io') => {
 
-    const url = (isLocal ? localBaseUrl : prodBaseUrl) + `/ws/${documentId}/${accessToken}`;
-    const rws = new ReconnectingWebSocket(url);
+    let baseUrl = "";
+    if (isLocal === undefined) {
+        baseUrl = process.env.NODE_ENV === "production" ? prodBaseUrl : localBaseUrl;
+    } else if (isLocal === true) {
+        baseUrl = localBaseUrl;
+    } else {
+        baseUrl = prodBaseUrl;
+    }
+
+    const rws = new ReconnectingWebSocket(baseUrl + `/ws/${documentId}/${accessToken}`);
 
     rws.addEventListener('open', () => {
         console.log('connected');

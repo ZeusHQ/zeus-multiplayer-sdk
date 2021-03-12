@@ -34,7 +34,7 @@ class ZeusMultiplayerService {
 
     constructor(publicKey: string, onTokenExpired: any, local: boolean) {
         this.publicKey = publicKey;
-        this.baseUrl = local ? "http://localhost:3003" : "https://Multiplayer.zeusdev.io";
+        this.baseUrl = local ? "http://localhost:3003" : "https://multiplayer.zeusdev.io";
         this.onTokenExpired = onTokenExpired;
     }
 

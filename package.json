@@ -1,10 +1,10 @@
 {
   "name": "zeus-multiplayer",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
-  "private": true,
+  "private": false,
   "dependencies": {
     "camelcase-keys": "^6.2.2",
     "isomorphic-unfetch": "^3.1.0",
