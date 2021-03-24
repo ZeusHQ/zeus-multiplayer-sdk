@@ -866,8 +866,10 @@ var reducer = function (state, action) {
         case exports.MultiplayerActionType.SetNodeProperties: {
             var nodes = __assign({}, state.nodes);
             var existingNode = nodes[action.node_id];
-            existingNode.properties = mergeProperties(existingNode.properties, action.properties);
-            nodes[action.node_id] = existingNode;
+            if (existingNode !== undefined) {
+                existingNode.properties = mergeProperties(existingNode.properties, action.properties);
+                nodes[action.node_id] = existingNode;
+            }
             return __assign(__assign({}, state), { nodes: nodes });
         }
         case exports.MultiplayerActionType.SetDocumentPresence: {
@@ -953,16 +955,16 @@ var DEFAULT_LOCAL_URL = "ws://localhost:8080";
 // useContext hook - export here to keep code for global Multiplayer state
 // together in this file, allowing user info to be accessed and updated
 // in any functional component using the hook
-var useZeusMultiplayerClient = function (dispatch, accessToken, documentId, onDocumentLoaded, localBaseUrl, prodBaseUrl) {
+var useZeusMultiplayerClient = function (dispatch, accessToken, documentId, onDocumentLoaded, isLocal, localBaseUrl, prodBaseUrl) {
+    if (isLocal === void 0) { isLocal = false; }
     if (localBaseUrl === void 0) { localBaseUrl = undefined; }
     if (prodBaseUrl === void 0) { prodBaseUrl = undefined; }
     var baseUrl = "";
-    var isProduction = process.env.NODE_ENV === "production";
-    if (isProduction) {
-        baseUrl = prodBaseUrl || DEFAULT_PROD_URL;
+    if (isLocal) {
+        baseUrl = localBaseUrl || DEFAULT_LOCAL_URL;
     }
     else {
-        baseUrl = localBaseUrl || DEFAULT_LOCAL_URL;
+        baseUrl = prodBaseUrl || DEFAULT_PROD_URL;
     }
     console.log("Connecting to #{baseUrl}");
     var rws = new ReconnectingWebSocket(baseUrl + ("/ws/" + documentId + "/" + accessToken));
