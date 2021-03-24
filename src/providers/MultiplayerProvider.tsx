@@ -181,8 +181,10 @@ const reducer: React.Reducer<IMultiplayerState, Actions> = (state, action) => {
             let nodes = { ...state.nodes };
 
             let existingNode = nodes[action.node_id];
-            existingNode.properties = mergeProperties(existingNode.properties, action.properties);
-            nodes[action.node_id] = existingNode;
+            if (existingNode !== undefined) {
+                existingNode.properties = mergeProperties(existingNode.properties, action.properties);
+                nodes[action.node_id] = existingNode;
+            }
 
             return { ...state, nodes };
         }
@@ -293,14 +295,14 @@ const DEFAULT_LOCAL_URL = "ws://localhost:8080";
 // useContext hook - export here to keep code for global Multiplayer state
 // together in this file, allowing user info to be accessed and updated
 // in any functional component using the hook
-export const useZeusMultiplayerClient: any = (dispatch, accessToken: string, documentId: string, onDocumentLoaded: any, localBaseUrl = undefined, prodBaseUrl = undefined) => {
+export const useZeusMultiplayerClient: any = (dispatch, accessToken: string, documentId: string, onDocumentLoaded: any, isLocal = false, localBaseUrl = undefined, prodBaseUrl = undefined) => {
 
     let baseUrl = "";
-    const isProduction = process.env.NODE_ENV === "production";
-    if (isProduction) {
-        baseUrl = prodBaseUrl || DEFAULT_PROD_URL;
-    } else {
+
+    if (isLocal) {
         baseUrl = localBaseUrl || DEFAULT_LOCAL_URL;
+    } else {
+        baseUrl = prodBaseUrl || DEFAULT_PROD_URL;
     }
 
     console.log(`Connecting to #{baseUrl}`);
