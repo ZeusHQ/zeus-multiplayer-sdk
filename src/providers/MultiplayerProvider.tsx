@@ -295,7 +295,7 @@ const DEFAULT_LOCAL_URL = "ws://localhost:8080";
 // useContext hook - export here to keep code for global Multiplayer state
 // together in this file, allowing user info to be accessed and updated
 // in any functional component using the hook
-export const useZeusMultiplayerClient: any = (dispatch, accessToken: string, documentId: string, onDocumentLoaded: any, isLocal = false, localBaseUrl = undefined, prodBaseUrl = undefined) => {
+export const useZeusMultiplayerClient: any = (dispatch, accessToken: string, documentId: string, onDocumentLoaded: any, onSetNode: any, onDeleteNode: any, onSetNodeProperties: any, isLocal = false, localBaseUrl = undefined, prodBaseUrl = undefined) => {
 
     let baseUrl = "";
 
@@ -328,8 +328,19 @@ export const useZeusMultiplayerClient: any = (dispatch, accessToken: string, doc
     rws.addEventListener('message', (msg) => {
         const msgJson = JSON.parse(msg.data);
         dispatch(msgJson);
-        if (msgJson.type === MultiplayerActionType.SetDocument) {
-            onDocumentLoaded();
+        switch (msgJson.type) {
+            case MultiplayerActionType.SetNode:
+                onSetNode(msgJson);
+                break;
+            case MultiplayerActionType.SetNodeProperties:
+                onSetNodeProperties(msgJson);
+                break;
+            case MultiplayerActionType.DeleteNode:
+                onDeleteNode(msgJson);
+                break;
+            case MultiplayerActionType.SetDocument:
+                onDocumentLoaded(msgJson);
+                break;
         }
     });
 

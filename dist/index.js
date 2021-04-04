@@ -955,7 +955,7 @@ var DEFAULT_LOCAL_URL = "ws://localhost:8080";
 // useContext hook - export here to keep code for global Multiplayer state
 // together in this file, allowing user info to be accessed and updated
 // in any functional component using the hook
-var useZeusMultiplayerClient = function (dispatch, accessToken, documentId, onDocumentLoaded, isLocal, localBaseUrl, prodBaseUrl) {
+var useZeusMultiplayerClient = function (dispatch, accessToken, documentId, onDocumentLoaded, onSetNode, onDeleteNode, onSetNodeProperties, isLocal, localBaseUrl, prodBaseUrl) {
     if (isLocal === void 0) { isLocal = false; }
     if (localBaseUrl === void 0) { localBaseUrl = undefined; }
     if (prodBaseUrl === void 0) { prodBaseUrl = undefined; }
@@ -985,8 +985,19 @@ var useZeusMultiplayerClient = function (dispatch, accessToken, documentId, onDo
     rws.addEventListener('message', function (msg) {
         var msgJson = JSON.parse(msg.data);
         dispatch(msgJson);
-        if (msgJson.type === exports.MultiplayerActionType.SetDocument) {
-            onDocumentLoaded();
+        switch (msgJson.type) {
+            case exports.MultiplayerActionType.SetNode:
+                onSetNode(msgJson);
+                break;
+            case exports.MultiplayerActionType.SetNodeProperties:
+                onSetNodeProperties(msgJson);
+                break;
+            case exports.MultiplayerActionType.DeleteNode:
+                onDeleteNode(msgJson);
+                break;
+            case exports.MultiplayerActionType.SetDocument:
+                onDocumentLoaded(msgJson);
+                break;
         }
     });
     rws.addEventListener('error', function (error) {
