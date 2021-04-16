@@ -261,6 +261,45 @@ export const clearMultiplayerStorage = () => {
     }
 }
 
+export class ZeusMultiplayer {
+    private static instance: ZeusMultiplayer;
+
+    state: typeof initialState;
+    dispatch: any;
+    client: any;
+
+    constructor(state: any, dispatch: any) {
+        this.state = state;
+        this.dispatch = dispatch;
+    }
+
+    static state = () => ZeusMultiplayer.instance.state;
+    static dispatch = () => ZeusMultiplayer.instance.dispatch;
+    static node = (id) => ZeusMultiplayer.instance.state.nodes[id];
+    static nodes = () => ZeusMultiplayer.instance.state.nodes;
+    static document = (id) => ZeusMultiplayer.instance.state.documents[id];
+    static documents = () => ZeusMultiplayer.instance.state.documents;
+    static presence = (id) => ZeusMultiplayer.instance.state.presence[id];
+    static presences = () => ZeusMultiplayer.instance.state.presence;
+    static connected = () => ZeusMultiplayer.instance.state.connected;
+
+    static client = () => ZeusMultiplayer.instance.client;
+
+    static init(state: any, dispatch: any): ZeusMultiplayer {
+        if (!ZeusMultiplayer.instance) {
+            ZeusMultiplayer.instance = new ZeusMultiplayer(state, dispatch);
+        }
+
+        return ZeusMultiplayer.instance;
+    }
+
+    static setClient(client: any): ZeusMultiplayer {
+        ZeusMultiplayer.instance.client = client;
+
+        return ZeusMultiplayer.instance;
+    }
+}
+
 export const MultiplayerProvider = ({ children }: any) => {
     let localState = null;
     if (typeof localStorage !== 'undefined' && localStorage.getItem(ZEUS_MULTIPLAYER_LOCAL_STORAGE_KEY)) {
@@ -271,6 +310,7 @@ export const MultiplayerProvider = ({ children }: any) => {
         }
     }
     const [state, dispatch] = useReducer(reducer, localState || initialState);
+    ZeusMultiplayer.init(state, dispatch);
 
     if (typeof localStorage !== 'undefined') {
         useEffect(() => {
@@ -295,7 +335,8 @@ const DEFAULT_LOCAL_URL = "ws://localhost:8080";
 // useContext hook - export here to keep code for global Multiplayer state
 // together in this file, allowing user info to be accessed and updated
 // in any functional component using the hook
-export const useZeusMultiplayerClient: any = (dispatch, accessToken: string, documentId: string, onDocumentLoaded: any, onSetNode: any, onDeleteNode: any, onSetNodeProperties: any, isLocal = false, localBaseUrl = undefined, prodBaseUrl = undefined) => {
+export const useZeusMultiplayerClient: any = (accessToken: string, documentId: string, onDocumentLoaded: any, onSetNode: any, onDeleteNode: any, onSetNodeProperties: any, isLocal = false, localBaseUrl = undefined, prodBaseUrl = undefined) => {
+    const dispatch = ZeusMultiplayer.dispatch();
 
     let baseUrl = "";
 
@@ -304,8 +345,6 @@ export const useZeusMultiplayerClient: any = (dispatch, accessToken: string, doc
     } else {
         baseUrl = prodBaseUrl || DEFAULT_PROD_URL;
     }
-
-    console.log(`Connecting to #{baseUrl}`);
 
     const rws = new ReconnectingWebSocket(baseUrl + `/ws/${documentId}/${accessToken}`);
 
@@ -330,16 +369,16 @@ export const useZeusMultiplayerClient: any = (dispatch, accessToken: string, doc
         dispatch(msgJson);
         switch (msgJson.type) {
             case MultiplayerActionType.SetNode:
-                onSetNode(msgJson);
+                if (onSetNode) onSetNode(msgJson);
                 break;
             case MultiplayerActionType.SetNodeProperties:
-                onSetNodeProperties(msgJson);
+                if (onSetNodeProperties) onSetNodeProperties(msgJson);
                 break;
             case MultiplayerActionType.DeleteNode:
-                onDeleteNode(msgJson);
+                if (onDeleteNode) onDeleteNode(msgJson);
                 break;
             case MultiplayerActionType.SetDocument:
-                onDocumentLoaded(msgJson);
+                if (onDocumentLoaded) onDocumentLoaded(msgJson);
                 break;
         }
     });
@@ -412,6 +451,8 @@ export const useZeusMultiplayerClient: any = (dispatch, accessToken: string, doc
         setUserPresenceProperties: setUserPresenceProperties,
         setNodeProperties: setNodeProperties,
     }
+
+    ZeusMultiplayer.setClient(zeus);
 
     return zeus;
 }

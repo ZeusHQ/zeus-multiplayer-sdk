@@ -922,6 +922,33 @@ var clearMultiplayerStorage = function () {
         localStorage.removeItem(ZEUS_MULTIPLAYER_LOCAL_STORAGE_KEY);
     }
 };
+var ZeusMultiplayer = /** @class */ (function () {
+    function ZeusMultiplayer(state, dispatch) {
+        this.state = state;
+        this.dispatch = dispatch;
+    }
+    ZeusMultiplayer.init = function (state, dispatch) {
+        if (!ZeusMultiplayer.instance) {
+            ZeusMultiplayer.instance = new ZeusMultiplayer(state, dispatch);
+        }
+        return ZeusMultiplayer.instance;
+    };
+    ZeusMultiplayer.setClient = function (client) {
+        ZeusMultiplayer.instance.client = client;
+        return ZeusMultiplayer.instance;
+    };
+    ZeusMultiplayer.state = function () { return ZeusMultiplayer.instance.state; };
+    ZeusMultiplayer.dispatch = function () { return ZeusMultiplayer.instance.dispatch; };
+    ZeusMultiplayer.node = function (id) { return ZeusMultiplayer.instance.state.nodes[id]; };
+    ZeusMultiplayer.nodes = function () { return ZeusMultiplayer.instance.state.nodes; };
+    ZeusMultiplayer.document = function (id) { return ZeusMultiplayer.instance.state.documents[id]; };
+    ZeusMultiplayer.documents = function () { return ZeusMultiplayer.instance.state.documents; };
+    ZeusMultiplayer.presence = function (id) { return ZeusMultiplayer.instance.state.presence[id]; };
+    ZeusMultiplayer.presences = function () { return ZeusMultiplayer.instance.state.presence; };
+    ZeusMultiplayer.connected = function () { return ZeusMultiplayer.instance.state.connected; };
+    ZeusMultiplayer.client = function () { return ZeusMultiplayer.instance.client; };
+    return ZeusMultiplayer;
+}());
 var MultiplayerProvider = function (_a) {
     var children = _a.children;
     var localState = null;
@@ -934,6 +961,7 @@ var MultiplayerProvider = function (_a) {
         }
     }
     var _c = useReducer(reducer, localState || initialState), state = _c[0], dispatch = _c[1];
+    ZeusMultiplayer.init(state, dispatch);
     if (typeof localStorage !== 'undefined') {
         useEffect(function () {
             localStorage.setItem(ZEUS_MULTIPLAYER_LOCAL_STORAGE_KEY, JSON.stringify(state));
@@ -947,10 +975,11 @@ var DEFAULT_LOCAL_URL = "ws://localhost:8080";
 // useContext hook - export here to keep code for global Multiplayer state
 // together in this file, allowing user info to be accessed and updated
 // in any functional component using the hook
-var useZeusMultiplayerClient = function (dispatch, accessToken, documentId, onDocumentLoaded, onSetNode, onDeleteNode, onSetNodeProperties, isLocal, localBaseUrl, prodBaseUrl) {
+var useZeusMultiplayerClient = function (accessToken, documentId, onDocumentLoaded, onSetNode, onDeleteNode, onSetNodeProperties, isLocal, localBaseUrl, prodBaseUrl) {
     if (isLocal === void 0) { isLocal = false; }
     if (localBaseUrl === void 0) { localBaseUrl = undefined; }
     if (prodBaseUrl === void 0) { prodBaseUrl = undefined; }
+    var dispatch = ZeusMultiplayer.dispatch();
     var baseUrl = "";
     if (isLocal) {
         baseUrl = localBaseUrl || DEFAULT_LOCAL_URL;
@@ -958,7 +987,6 @@ var useZeusMultiplayerClient = function (dispatch, accessToken, documentId, onDo
     else {
         baseUrl = prodBaseUrl || DEFAULT_PROD_URL;
     }
-    console.log("Connecting to #{baseUrl}");
     var rws = new ReconnectingWebSocket(baseUrl + ("/ws/" + documentId + "/" + accessToken));
     rws.addEventListener('open', function () {
         console.log('connected');
@@ -979,16 +1007,20 @@ var useZeusMultiplayerClient = function (dispatch, accessToken, documentId, onDo
         dispatch(msgJson);
         switch (msgJson.type) {
             case MultiplayerActionType.SetNode:
-                onSetNode(msgJson);
+                if (onSetNode)
+                    onSetNode(msgJson);
                 break;
             case MultiplayerActionType.SetNodeProperties:
-                onSetNodeProperties(msgJson);
+                if (onSetNodeProperties)
+                    onSetNodeProperties(msgJson);
                 break;
             case MultiplayerActionType.DeleteNode:
-                onDeleteNode(msgJson);
+                if (onDeleteNode)
+                    onDeleteNode(msgJson);
                 break;
             case MultiplayerActionType.SetDocument:
-                onDocumentLoaded(msgJson);
+                if (onDocumentLoaded)
+                    onDocumentLoaded(msgJson);
                 break;
         }
     });
@@ -1049,8 +1081,9 @@ var useZeusMultiplayerClient = function (dispatch, accessToken, documentId, onDo
         setUserPresenceProperties: setUserPresenceProperties,
         setNodeProperties: setNodeProperties,
     };
+    ZeusMultiplayer.setClient(zeus);
     return zeus;
 };
 
-export { MultiplayerActionType, MultiplayerProvider, ZeusMultiplayerService as MultiplayerService, MultiplayerStateContext, ZEUS_MULTIPLAYER_LOCAL_STORAGE_KEY, clearMultiplayerStorage, useZeusMultiplayer, useZeusMultiplayerClient };
+export { MultiplayerActionType, MultiplayerProvider, ZeusMultiplayerService as MultiplayerService, MultiplayerStateContext, ZEUS_MULTIPLAYER_LOCAL_STORAGE_KEY, ZeusMultiplayer, clearMultiplayerStorage, useZeusMultiplayer, useZeusMultiplayerClient };
 //# sourceMappingURL=index.esm.js.map

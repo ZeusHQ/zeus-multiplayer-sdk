@@ -15,6 +15,7 @@ export interface IMultiplayerNode {
 export interface IMultiplayerNodeCreate {
     name: string;
     type: string;
+    parent_id: string;
     properties: IMultiplayerNodeProperties;
 }
 export interface IMultiplayerNodeUpdate {

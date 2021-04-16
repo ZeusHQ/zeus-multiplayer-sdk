@@ -98,6 +98,30 @@ export interface IMultiplayerRemoveUserPresenceAction {
 }
 export declare const ZEUS_MULTIPLAYER_LOCAL_STORAGE_KEY = "zeus.multiplayer.storage";
 export declare const clearMultiplayerStorage: () => void;
+export declare class ZeusMultiplayer {
+    private static instance;
+    state: typeof initialState;
+    dispatch: any;
+    client: any;
+    constructor(state: any, dispatch: any);
+    static state: () => {
+        connected: boolean;
+        presence: IMultiplayerPresenceState;
+        documents: IMultiplayerDocumentState;
+        nodes: IMultiplayerNodeState;
+    };
+    static dispatch: () => any;
+    static node: (id: any) => Types.IMultiplayerNode;
+    static nodes: () => IMultiplayerNodeState;
+    static document: (id: any) => Types.IMultiplayerDocument;
+    static documents: () => IMultiplayerDocumentState;
+    static presence: (id: any) => IMultiplayerDocumentPresenceState;
+    static presences: () => IMultiplayerPresenceState;
+    static connected: () => boolean;
+    static client: () => any;
+    static init(state: any, dispatch: any): ZeusMultiplayer;
+    static setClient(client: any): ZeusMultiplayer;
+}
 export declare const MultiplayerProvider: ({ children }: any) => JSX.Element;
 export declare const useZeusMultiplayer: any;
 export declare const useZeusMultiplayerClient: any;
