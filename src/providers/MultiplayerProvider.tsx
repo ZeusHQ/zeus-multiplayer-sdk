@@ -107,6 +107,10 @@ export interface IMultiplayerRemoveUserPresenceAction {
     user_id: string;
 }
 
+export interface IMultiplayerPongAction {
+    type: MultiplayerActionType.Pong;
+}
+
 type Actions = IMultiplayerSetConnectionStatusAction |
     IMultiplayerCreateNodeAction |
     IMultiplayerUpdateNodeAction |
@@ -118,7 +122,8 @@ type Actions = IMultiplayerSetConnectionStatusAction |
     IMultiplayerSetDocumentPresenceAction |
     IMultiplayerSetUserPresenceAction |
     IMultiplayerRemoveUserPresenceAction |
-    IMultiplayerSetUserPresencePropertiesAction;
+    IMultiplayerSetUserPresencePropertiesAction |
+    IMultiplayerPongAction;
 
 const reducer: React.Reducer<IMultiplayerState, Actions> = (state, action) => {
     switch (action.type) {
@@ -229,7 +234,9 @@ const reducer: React.Reducer<IMultiplayerState, Actions> = (state, action) => {
             return { ...state, presence };
         }
 
-
+        case MultiplayerActionType.Pong: {
+            return { ...state };
+        }
 
         default:
             console.log(`Unhandled action type: ${(action as Actions).type}`, action);

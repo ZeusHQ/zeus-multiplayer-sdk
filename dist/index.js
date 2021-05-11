@@ -906,6 +906,9 @@ var reducer = function (state, action) {
             delete docPresence[action.user_id];
             return __assign(__assign({}, state), { presence: presence });
         }
+        case exports.MultiplayerActionType.Pong: {
+            return __assign({}, state);
+        }
         default:
             console.log("Unhandled action type: " + action.type, action);
     }

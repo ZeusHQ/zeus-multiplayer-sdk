@@ -98,6 +98,9 @@ export interface IMultiplayerRemoveUserPresenceAction {
     document_id: string;
     user_id: string;
 }
+export interface IMultiplayerPongAction {
+    type: MultiplayerActionType.Pong;
+}
 export declare const ZEUS_MULTIPLAYER_LOCAL_STORAGE_KEY = "zeus.multiplayer.storage";
 export declare const clearMultiplayerStorage: () => void;
 export declare class ZeusMultiplayer {
