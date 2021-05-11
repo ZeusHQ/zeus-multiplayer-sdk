@@ -989,9 +989,8 @@ var useZeusMultiplayerClient = function (accessToken, documentId, onDocumentLoad
     }
     var rws = new ReconnectingWebSocket(baseUrl + ("/ws/" + documentId + "/" + accessToken));
     rws.addEventListener('open', function () {
-        console.log('connected');
         rws.heartbeat = setTimeout(function () {
-            rws.send(JSON.stringify({ type: "heartbeat" }));
+            rws.send(JSON.stringify({ type: "ping" }));
         }, 5000);
         dispatch({
             type: MultiplayerActionType.SetConnectionStatus,
@@ -999,7 +998,6 @@ var useZeusMultiplayerClient = function (accessToken, documentId, onDocumentLoad
         });
     });
     rws.addEventListener('close', function () {
-        console.log('disconnected');
         if (rws.heartbeat)
             clearTimeout(rws.heartbeat);
         dispatch({
