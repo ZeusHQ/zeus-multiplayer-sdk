@@ -36,7 +36,9 @@ export declare enum MultiplayerActionType {
     SetUserPresence = "setUserPresence",
     RemoveUserPresence = "removeUserPresence",
     CreateNode = "createNode",
-    UpdateNode = "updateNode"
+    UpdateNode = "updateNode",
+    Ping = "ping",
+    Pong = "pong"
 }
 export interface IMultiplayerSetConnectionStatusAction {
     type: MultiplayerActionType.SetConnectionStatus;

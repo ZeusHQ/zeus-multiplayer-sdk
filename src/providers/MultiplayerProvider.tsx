@@ -35,6 +35,8 @@ export enum MultiplayerActionType {
     RemoveUserPresence = 'removeUserPresence',
     CreateNode = 'createNode',
     UpdateNode = 'updateNode',
+    Ping = 'ping',
+    Pong = 'pong',
 }
 
 export interface IMultiplayerSetConnectionStatusAction {
@@ -350,7 +352,7 @@ export const useZeusMultiplayerClient: any = (accessToken: string, documentId: s
 
     rws.addEventListener('open', () => {
         (rws as any).heartbeat = setTimeout(() => {
-            rws.send(JSON.stringify({ type: "ping" }));
+            rws.send(JSON.stringify({ type: MultiplayerActionType.Ping }));
         }, 5000);
         dispatch({
             type: MultiplayerActionType.SetConnectionStatus,

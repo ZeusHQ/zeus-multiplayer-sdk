@@ -817,6 +817,8 @@ exports.MultiplayerActionType = void 0;
     MultiplayerActionType["RemoveUserPresence"] = "removeUserPresence";
     MultiplayerActionType["CreateNode"] = "createNode";
     MultiplayerActionType["UpdateNode"] = "updateNode";
+    MultiplayerActionType["Ping"] = "ping";
+    MultiplayerActionType["Pong"] = "pong";
 })(exports.MultiplayerActionType || (exports.MultiplayerActionType = {}));
 var reducer = function (state, action) {
     switch (action.type) {
@@ -998,7 +1000,7 @@ var useZeusMultiplayerClient = function (accessToken, documentId, onDocumentLoad
     var rws = new ReconnectingWebSocket(baseUrl + ("/ws/" + documentId + "/" + accessToken));
     rws.addEventListener('open', function () {
         rws.heartbeat = setTimeout(function () {
-            rws.send(JSON.stringify({ type: "ping" }));
+            rws.send(JSON.stringify({ type: exports.MultiplayerActionType.Ping }));
         }, 5000);
         dispatch({
             type: exports.MultiplayerActionType.SetConnectionStatus,
