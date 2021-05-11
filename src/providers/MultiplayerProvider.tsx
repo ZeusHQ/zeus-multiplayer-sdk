@@ -350,6 +350,9 @@ export const useZeusMultiplayerClient: any = (accessToken: string, documentId: s
 
     rws.addEventListener('open', () => {
         console.log('connected');
+        (rws as any).heartbeat = setTimeout(() => {
+            rws.send(JSON.stringify({ type: "heartbeat" }));
+        }, 5000);
         dispatch({
             type: MultiplayerActionType.SetConnectionStatus,
             payload: true
@@ -358,6 +361,7 @@ export const useZeusMultiplayerClient: any = (accessToken: string, documentId: s
 
     rws.addEventListener('close', () => {
         console.log('disconnected');
+        if ((rws as any).heartbeat) clearTimeout((rws as any).heartbeat);
         dispatch({
             type: MultiplayerActionType.SetConnectionStatus,
             payload: false
